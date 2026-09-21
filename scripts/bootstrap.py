@@ -10,6 +10,8 @@ import tempfile
 import tarfile
 import shutil
 import os
+import time
+import urllib.error
 import urllib.request
 import zipfile
 
@@ -19,8 +21,22 @@ def download(url, target, digest):
     if target.exists() and hashlib.sha256(target.read_bytes()).hexdigest() == digest:
         return
     target.parent.mkdir(parents=True, exist_ok=True)
-    with urllib.request.urlopen(url, timeout=120) as response:
-        data = response.read(64 * 1024 * 1024 + 1)
+    for attempt in range(5):
+        try:
+            with urllib.request.urlopen(url, timeout=120) as response:
+                data = response.read(64 * 1024 * 1024 + 1)
+            break
+        except urllib.error.HTTPError as error:
+            retryable = error.code in (408, 429) or 500 <= error.code < 600
+            if not retryable or attempt == 4:
+                raise
+            error.close()
+        except urllib.error.URLError:
+            if attempt == 4:
+                raise
+        delay = 2 ** attempt
+        print(f'Download failed, retrying in {delay}s: {url}')
+        time.sleep(delay)
     if hashlib.sha256(data).hexdigest() != digest:
         raise ValueError('Downloaded asset checksum mismatch: ' + url)
     target.write_bytes(data)
