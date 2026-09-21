@@ -1,0 +1,139 @@
+{
+  "platform": "linux-x86_64",
+  "compilers": [
+    {
+      "id": "func-0.2.0",
+      "version": "0.2.0",
+      "revision": "9640a2794a1cc88a9534991c0709f64f95c1c4e0",
+      "source_build": {
+        "url": "https://github.com/ton-blockchain/ton/archive/9640a2794a1cc88a9534991c0709f64f95c1c4e0.tar.gz",
+        "sha256": "c771d3724527b282803434b3796f328500ce6495168195e0e9ae2ddf418e1ff8",
+        "crc32c": {
+          "revision": "02e65f4fd3065d27b2e29324800ca6d04df16126",
+          "url": "https://github.com/google/crc32c/archive/02e65f4fd3065d27b2e29324800ca6d04df16126.tar.gz",
+          "sha256": "50ac512ad20ebca0be21bcf7c3c6d15aa3fcc27550b09825fab061bffe512bdf"
+        }
+      }
+    },
+    {
+      "id": "func-0.3.0",
+      "version": "0.3.0",
+      "revision": "701fc6afad4484d6f8df3500ad85123c2de51b2e",
+      "source_build": {
+        "url": "https://github.com/ton-blockchain/ton/archive/701fc6afad4484d6f8df3500ad85123c2de51b2e.tar.gz",
+        "sha256": "b57d0b032f60c42e1f9704e9572550b71871eade37831cba27189797c2a2fd9e",
+        "crc32c": {
+          "revision": "02e65f4fd3065d27b2e29324800ca6d04df16126",
+          "url": "https://github.com/google/crc32c/archive/02e65f4fd3065d27b2e29324800ca6d04df16126.tar.gz",
+          "sha256": "50ac512ad20ebca0be21bcf7c3c6d15aa3fcc27550b09825fab061bffe512bdf"
+        }
+      }
+    },
+    {
+      "id": "func-0.4.0",
+      "version": "0.4.0",
+      "revision": "f59c363ab942a5ddcacd670c97c6fbd023007799",
+      "source_build": {
+        "url": "https://github.com/ton-blockchain/ton/archive/f59c363ab942a5ddcacd670c97c6fbd023007799.tar.gz",
+        "sha256": "93c70a16116690de6010f714e3117d7b6a26e673d2af65f228c9fd150e410eed",
+        "crc32c": {
+          "revision": "02e65f4fd3065d27b2e29324800ca6d04df16126",
+          "url": "https://github.com/google/crc32c/archive/02e65f4fd3065d27b2e29324800ca6d04df16126.tar.gz",
+          "sha256": "50ac512ad20ebca0be21bcf7c3c6d15aa3fcc27550b09825fab061bffe512bdf"
+        }
+      }
+    },
+    {
+      "id": "func-0.4.1",
+      "version": "0.4.1",
+      "revision": "fc9542f5e223140fcca833c189f77b1a5ae2e184",
+      "source_build": {
+        "url": "https://github.com/ton-blockchain/ton/archive/fc9542f5e223140fcca833c189f77b1a5ae2e184.tar.gz",
+        "sha256": "0c440160ad49faac07b74d3e2b5a03082a7d653a201f830af58c23473bc562fa",
+        "crc32c": {
+          "revision": "02e65f4fd3065d27b2e29324800ca6d04df16126",
+          "url": "https://github.com/google/crc32c/archive/02e65f4fd3065d27b2e29324800ca6d04df16126.tar.gz",
+          "sha256": "50ac512ad20ebca0be21bcf7c3c6d15aa3fcc27550b09825fab061bffe512bdf"
+        }
+      }
+    },
+    {
+      "id": "v2023.03",
+      "version": "0.4.2",
+      "url": "https://github.com/ton-blockchain/ton/releases/download/v2023.03/func-linux-x86_64",
+      "sha256": "9d27672c79f4a69650c3e51f3fd845607e0406b3db0cfdc3ca660239b3336de0",
+      "revision": "e37583e5e6e8cd0aebf5142ef7d8db282f10692b"
+    },
+    {
+      "id": "v2023.04",
+      "version": "0.4.3",
+      "url": "https://github.com/ton-blockchain/ton/releases/download/v2023.04/func-linux-x86_64",
+      "sha256": "c396644df6b517c63028f28a5bf592cf9225fe82572e34a98ddd9bc080213b81",
+      "revision": "e6f2205dbf5c1b8e4e7320feebadb979838327f1"
+    },
+    {
+      "id": "v2023.06",
+      "version": "0.4.4",
+      "url": "https://github.com/ton-blockchain/ton/releases/download/v2023.06/func-linux-x86_64",
+      "sha256": "06bbb987627253943944b9cb5fa0a4157aa9edcbd95f5ac1e3591a0dc26353f5",
+      "revision": "cc0eb453cb3bf69f92693160103d33112856c056"
+    },
+    {
+      "id": "v2024.03",
+      "version": "0.4.4",
+      "url": "https://github.com/ton-blockchain/ton/releases/download/v2024.03/func-linux-x86_64",
+      "sha256": "1f79d3f3ba22ef8bf2ef680fd513826fc3f86a7a92f16e121dd83a957630f42b",
+      "revision": "4969176ec9224ea63499f9e6ef0ad92bee2104ea"
+    },
+    {
+      "id": "v2024.10",
+      "version": "0.4.5",
+      "url": "https://github.com/ton-blockchain/ton/releases/download/v2024.10/func-linux-x86_64",
+      "sha256": "e3695f86c6cc8d8c98ff27fd9bce3befe81ff24db2d0cfb450a53aa7946f2b08",
+      "revision": "938c1549cced934a697629e1e376354486058c04"
+    },
+    {
+      "id": "v2026.08",
+      "version": "0.4.6",
+      "url": "https://github.com/ton-blockchain/ton/releases/download/v2026.08/func-linux-x86_64",
+      "sha256": "86cf4c8edceff173a08899b25b8d10f8ff1ee198cb0c19b8d9745a840b57ef5e",
+      "revision": "3d478cbde854be03a18ab2a59f8fc3c565cf7d14",
+      "native_sha256": "c066c30ef4d8f1a83f1af76f46a5b313966b999824c1951d4b77f85628a699f2"
+    }
+  ],
+  "fift": {
+    "id": "v2026.08",
+    "url": "https://github.com/ton-blockchain/ton/releases/download/v2026.08/fift-linux-x86_64",
+    "sha256": "18f76d5b2973b1fa13222a19548bba624074c91492fb871102f31473bc29f6f2",
+    "native_sha256": "fa7bc803a3dde942560b0c6b90e9084d582ae8f3f5993bdccf0e5865aa4d460c",
+    "revision": "3d478cbde854be03a18ab2a59f8fc3c565cf7d14"
+  },
+  "libraries": {
+    "url": "https://github.com/ton-blockchain/ton/releases/download/v2026.08/smartcont_lib.zip",
+    "sha256": "00d51c916a0ee89e0c147c3508a29b985f3f1aeeaf54a604254ad7799845297a"
+  },
+  "library_hashes": {
+    "Stack.fif": "02b958d2ecf41623f903036d34f8d844a0ce4d5a22b0559a838434316ed19664",
+    "Lists.fif": "ba83bed37731fc228c81632ae872be53f416176d2ca9de5a9b3373176b928f62",
+    "Lisp.fif": "d372c3557f4b79ecb587a21d203cd1a49ec2342088166f0b9b1c063d9ae4541e",
+    "Color.fif": "86e097b821f3ebb07e0b996dc2a2618b23fd373f8fcf985d087413b26555aade",
+    "Fift.fif": "bad419afb217f533cfba08eaec1ba33dbbd8b061bf5299447ea672e2561ed7a4",
+    "FiftExt.fif": "6b51760724219c823f6e888be366c8be6c85121a4e9742b89a08e6becb40d016",
+    "Disasm.fif": "f61ff96c974e50bbe3475f819f598b44817b94abe927027bf35258b3d40ab9f6",
+    "Asm.fif": "15f42164a64b879c74729bc02b40e06e871ba18381f40ffffdcc50759b59dfba",
+    "TonUtil.fif": "c0bf66261286bba9b392610b2dd7b003d276959835827eb3d51187b84ae4087a",
+    "GetOpt.fif": "68fe293bafa2a19ac339530d293c9975e381975a012e1460b02834c85190acb6"
+  },
+  "supported_flags": [
+    "-O0",
+    "-O1",
+    "-O2",
+    "-O3"
+  ],
+  "environment": {
+    "python": "3.11+",
+    "platform": "Linux x86_64",
+    "memory_limit_bytes": 805306368,
+    "file_limit_bytes": 4194304
+  }
+}

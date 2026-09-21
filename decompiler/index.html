@@ -1,0 +1,194 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>TVM → FunC decompiler</title>
+  <style>
+    :root { color-scheme: light; font-family: system-ui, sans-serif; color: #192d36; background: #f3f6f7; }
+    * { box-sizing: border-box; }
+    body { margin: 0; }
+    main { max-width: 960px; margin: 56px auto; padding: 0 24px; }
+    h1 { font-size: clamp(1.8rem, 5vw, 2.6rem); letter-spacing: -.04em; margin: 0 0 12px; }
+    h2 { font-size: 1.2rem; margin: 0; }
+    p { line-height: 1.6; }
+    .intro { color: #526771; margin-bottom: 28px; }
+    form, section { background: white; border: 1px solid #d6e0e4; border-radius: 12px; padding: 24px; margin-bottom: 20px; }
+    label { display: block; font-weight: 600; margin-bottom: 8px; }
+    textarea { width: 100%; min-height: 180px; resize: vertical; padding: 14px; border: 1px solid #8da4ae; border-radius: 6px; font: .9rem/1.6 ui-monospace, monospace; }
+    select { padding: 10px; border: 1px solid #8da4ae; border-radius: 6px; font: inherit; background: white; }
+    #source-view-control { margin-top: 20px; }
+    .hint { font-size: .875rem; color: #526771; margin: 8px 0 20px; }
+    button { border: 0; border-radius: 6px; background: #126457; color: white; font: inherit; font-weight: 600; padding: 12px 20px; cursor: pointer; }
+    button:disabled { opacity: .65; cursor: wait; }
+    :focus-visible { outline: 3px solid #1886b1; outline-offset: 3px; }
+    #status { margin: 16px 0 0; min-height: 1.5em; }
+    #status[data-error="true"] { color: #a52525; }
+    dl { display: flex; flex-wrap: wrap; gap: 20px 40px; margin: 20px 0; }
+    dt { color: #526771; font-size: .85rem; }
+    dd { margin: 4px 0 0; font-weight: 600; }
+    pre { background: #f3f6f7; border: 1px solid #d6e0e4; border-radius: 6px; padding: 16px; font: .875rem/1.6 ui-monospace, monospace; overflow: auto; max-height: 600px; white-space: pre-wrap; overflow-wrap: anywhere; }
+    #diagnostics { color: #526771; white-space: pre-wrap; }
+    summary { cursor: pointer; font-weight: 600; padding: 8px 0; }
+    [hidden] { display: none !important; }
+    @media (max-width: 600px) { main { margin: 28px auto; padding: 0 16px; } form, section { padding: 18px; } }
+  </style>
+</head>
+<body>
+  <main>
+    <h1>TVM → FunC</h1>
+    <p class="intro">Paste a compiled contract’s base64 code-cell BOC to reconstruct FunC and verify it by recompilation.</p>
+    <form id="decompile-form">
+      <label for="code">Base64 contract</label>
+      <textarea id="code" name="code" required maxlength="1500000" placeholder="te6cc…" spellcheck="false" autocapitalize="off" autocomplete="off" aria-describedby="code-hint"></textarea>
+      <p id="code-hint" class="hint">Code-cell BOC, up to 1 MiB decoded. Line breaks and surrounding whitespace are accepted.</p>
+      <button id="submit" type="submit">Decompile</button>
+      <p id="status" role="status" aria-live="polite" aria-atomic="true"></p>
+    </form>
+    <section id="result" aria-labelledby="result-title" hidden>
+      <h2 id="result-title">Decompilation result</h2>
+      <div id="source-view-control" hidden>
+        <label for="source-view">Source view</label>
+        <select id="source-view" aria-controls="metrics diagnostics source stdlib-details">
+          <option value="readable">Readable FunC</option>
+          <option value="verified">Verified candidate</option>
+        </select>
+      </div>
+      <dl id="metrics" hidden>
+        <div><dt>Verification</dt><dd id="quality"></dd></div>
+        <div><dt>Source form</dt><dd id="mode"></dd></div>
+        <div><dt>Recompilation compiler</dt><dd id="compiler"></dd></div>
+      </dl>
+      <p id="diagnostics" hidden></p>
+      <h3 id="source-label" hidden>Contract source</h3>
+      <pre id="source" aria-label="Contract FunC source" tabindex="0" hidden></pre>
+      <details id="stdlib-details" hidden>
+        <summary>Generated stdlib</summary>
+        <pre id="stdlib-source" aria-label="Generated FunC stdlib" tabindex="0"></pre>
+      </details>
+      <details id="details">
+        <summary>Full response</summary>
+        <pre id="json" aria-label="JSON response" tabindex="0"></pre>
+      </details>
+    </section>
+    <noscript><p>Enable JavaScript to submit a contract from this page. The HTTP API is also available at POST /v1/decompile.</p></noscript>
+  </main>
+  <script>
+    const form = document.getElementById('decompile-form');
+    const submit = document.getElementById('submit');
+    const status = document.getElementById('status');
+    const result = document.getElementById('result');
+    const source = document.getElementById('source');
+    const sourceLabel = document.getElementById('source-label');
+    const stdlibDetails = document.getElementById('stdlib-details');
+    const stdlibSource = document.getElementById('stdlib-source');
+    const viewControl = document.getElementById('source-view-control');
+    const sourceView = document.getElementById('source-view');
+    let currentData = null;
+    function clearSources() {
+      currentData = null;
+      viewControl.hidden = true;
+      sourceView.value = 'verified';
+      source.hidden = true;
+      sourceLabel.hidden = true;
+      source.textContent = '';
+      stdlibDetails.hidden = true;
+      stdlibDetails.open = false;
+      stdlibSource.textContent = '';
+    }
+    const metrics = document.getElementById('metrics');
+    const diagnostics = document.getElementById('diagnostics');
+    const details = document.getElementById('details');
+    function showSourceView() {
+      if (!currentData) return;
+      const data = sourceView.value === 'readable' && currentData.readable
+        ? currentData.readable : currentData;
+      const verification = data.decompilation || {};
+      const exact = verification.exact_hash_match === true;
+      document.getElementById('quality').textContent = exact ? 'Exact code hash'
+        : verification.recompiles ? 'Compiles · code hash differs' : 'Not verified';
+      const names = { structured: 'High-level FunC', hybrid: 'FunC + preserved assembly', assembly: 'Preserved assembly', cell_assembly: 'Preserved method cells' };
+      document.getElementById('mode').textContent = names[verification.reconstruction_mode] || 'Unknown';
+      document.getElementById('compiler').textContent = data.compiler?.selected_version || data.compiler?.version || 'Undetermined';
+      metrics.hidden = false;
+      const assemblyDisplay = sourceView.value === 'readable' && data.display_contract;
+      if (assemblyDisplay) document.getElementById('quality').textContent = 'Underlying source: ' + document.getElementById('quality').textContent;
+      source.textContent = assemblyDisplay || data.contract || data.func || '';
+      source.hidden = !source.textContent;
+      sourceLabel.hidden = source.hidden;
+      stdlibSource.textContent = data.stdlib || '';
+      stdlibDetails.hidden = !stdlibSource.textContent;
+      stdlibDetails.open = false;
+      const notes = [...(data.diagnostics || [])];
+      if (assemblyDisplay) notes.unshift('Fift blocks show undecoded instructions. This mixed display is not compilable FunC; verification applies to the underlying FunC source available in the API.');
+      if (!exact && !notes.length) notes.push('Code hash differs. Equivalence to the original contract has not been established.');
+      diagnostics.textContent = notes.join('\n');
+      diagnostics.hidden = !diagnostics.textContent;
+      status.textContent = assemblyDisplay ? 'Done. Undecoded methods are shown as Fift instruction blocks.' : exact
+        ? 'Done. Recompilation matches the original code hash.'
+        : 'Done. The selected source does not reproduce the original code hash. Review the diagnostics below.';
+    }
+    sourceView.addEventListener('change', showSourceView);
+    form.addEventListener('submit', async event => {
+      event.preventDefault();
+      if (submit.disabled) return;
+      result.hidden = true;
+      clearSources();
+      metrics.hidden = true;
+      diagnostics.hidden = true;
+      diagnostics.textContent = '';
+      details.open = false;
+      status.dataset.error = 'false';
+      const code = document.getElementById('code').value.replace(/\s/g, '');
+      if (!code || code.length > 1398104) {
+        status.dataset.error = 'true';
+        status.textContent = code ? 'The contract exceeds the 1 MiB input limit.' : 'Paste a base64 contract first.';
+        return;
+      }
+      submit.disabled = true;
+      submit.textContent = 'Decompiling…';
+      form.setAttribute('aria-busy', 'true');
+      status.textContent = 'Decompiling and verifying. This can take about 30 seconds.';
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), 20000);
+      try {
+        const response = await fetch('/v1/decompile', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ code }),
+          signal: controller.signal
+        });
+        let data;
+        try { data = await response.json(); }
+        catch { throw new Error(`The server returned an unreadable response (HTTP ${response.status}).`); }
+        document.getElementById('json').textContent = JSON.stringify(data, null, 2);
+        result.hidden = false;
+        if (!response.ok || !data.success) {
+          details.open = true;
+          throw new Error(data.error?.message || `Decompilation failed (HTTP ${response.status}).`);
+        }
+        currentData = data;
+        sourceView.options[1].textContent = data.decompilation?.exact_hash_match === true
+          ? 'Exact-bytecode source' : 'Verified candidate';
+        viewControl.hidden = !data.readable && !data.display_contract;
+        sourceView.value = data.readable || data.display_contract ? 'readable' : 'verified';
+        showSourceView();
+      } catch (error) {
+        clearSources();
+        metrics.hidden = true;
+        diagnostics.hidden = true;
+        diagnostics.textContent = '';
+        status.dataset.error = 'true';
+        status.textContent = error.name === 'AbortError'
+          ? 'The request timed out. Please try again.'
+          : (error.message || 'Unable to reach the server. Please try again.');
+      } finally {
+        clearTimeout(timeout);
+        submit.disabled = false;
+        submit.textContent = 'Decompile';
+        form.removeAttribute('aria-busy');
+      }
+    });
+  </script>
+</body>
+</html>

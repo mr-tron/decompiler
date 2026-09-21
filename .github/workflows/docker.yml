@@ -1,0 +1,99 @@
+name: Docker image
+
+on:
+  pull_request:
+  push:
+    branches: ['**']
+    tags: ['v*']
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: docker-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  image:
+    if: github.event_name != 'push' || github.ref_name == github.event.repository.default_branch || startsWith(github.ref, 'refs/tags/')
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4.4.1
+      - name: Image tags and labels
+        id: meta
+        uses: docker/metadata-action@dc802804100637a589fabce1cb79ff13a1411302 # v6.2.0
+        with:
+          images: ghcr.io/${{ github.repository }}
+          tags: |
+            type=raw,value=latest,enable={{is_default_branch}}
+            type=ref,event=tag
+            type=sha,format=long
+          flavor: latest=false
+      - name: Build image
+        uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc # v7.4.0
+        with:
+          context: .
+          platforms: linux/amd64
+          load: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+      - name: Check web page and real decompilation
+        env:
+          IMAGE_TAGS: ${{ steps.meta.outputs.tags }}
+        run: |
+          image="${IMAGE_TAGS%%$'\n'*}"
+          docker run -d --name decompiler-test "$image"
+          docker exec -i decompiler-test python - <<'PY'
+          import json
+          import time
+          import urllib.request
+
+          url = 'http://127.0.0.1:8080'
+          for attempt in range(30):
+              try:
+                  with urllib.request.urlopen(url, timeout=2) as response:
+                      assert b'<form id="decompile-form">' in response.read()
+                  break
+              except OSError:
+                  if attempt == 29:
+                      raise
+                  time.sleep(1)
+          request = urllib.request.Request(url + '/v1/decompile',
+              data=json.dumps({'code': 'te6cckEBAgEAEgABFP8A9KQT9LzyyAsBAAbT8ioBicQb'}).encode(),
+              headers={'Content-Type': 'application/json'})
+          with urllib.request.urlopen(request, timeout=20) as response:
+              result = json.load(response)
+          assert result['success'], result
+          assert result['decompilation']['exact_hash_match'], result
+          assert result['func'], result
+          PY
+      - name: Remove test container
+        if: always()
+        run: |
+          docker logs decompiler-test || true
+          docker rm -f decompiler-test || true
+      - name: Sign in to GitHub Container Registry
+        if: github.event_name != 'pull_request'
+        uses: docker/login-action@dbcb813823bdd20940b903addbd779551569679f # v4.6.0
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Publish tested image
+        if: github.event_name != 'pull_request'
+        env:
+          IMAGE_TAGS: ${{ steps.meta.outputs.tags }}
+        run: |
+          while IFS= read -r tag; do
+            docker push "$tag"
+          done <<< "$IMAGE_TAGS"

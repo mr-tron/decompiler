@@ -1,0 +1,14 @@
+**
+!Dockerfile
+!toolchains.lock.json
+!scripts/
+scripts/**
+!scripts/bootstrap.py
+!scripts/limited_exec.py
+!decompiler/
+!decompiler/**
+!research/
+research/**
+!research/fingerprints.json
+**/__pycache__/
+**/*.pyc

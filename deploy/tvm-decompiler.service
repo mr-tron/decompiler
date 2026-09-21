@@ -1,0 +1,40 @@
+[Unit]
+Description=TVM to FunC decompiler
+After=network.target
+
+[Service]
+Type=simple
+DynamicUser=yes
+WorkingDirectory=/opt/tvm-decompiler
+ExecStart=/usr/bin/python3 -m decompiler serve --host 127.0.0.1 --port 8080
+Environment=PYTHONDONTWRITEBYTECODE=1
+Environment=TON_CACHE_DIR=/var/lib/tvm-decompiler
+StateDirectory=tvm-decompiler
+UMask=0077
+Restart=on-failure
+RestartSec=3
+NoNewPrivileges=yes
+ProtectSystem=strict
+ProtectHome=yes
+PrivateTmp=yes
+PrivateDevices=yes
+ProtectKernelTunables=yes
+ProtectKernelModules=yes
+ProtectKernelLogs=yes
+ProtectControlGroups=yes
+RestrictSUIDSGID=yes
+RestrictNamespaces=yes
+LockPersonality=yes
+CapabilityBoundingSet=
+RestrictAddressFamilies=AF_INET AF_INET6 AF_UNIX
+IPAddressDeny=any
+IPAddressAllow=localhost
+MemoryMax=2G
+TasksMax=32
+LimitNOFILE=256
+LimitCORE=0
+TimeoutStopSec=10
+KillMode=control-group
+
+[Install]
+WantedBy=multi-user.target
